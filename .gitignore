@@ -1,7 +1,5 @@
-# Frontend
-frontend/node_modules/
-frontend/build/
-frontend/.env
+# Frontend (not in this repo - deployed separately on Hostinger)
+frontend/
 
 # Backend
 backend/.venv/
@@ -11,13 +9,29 @@ backend/test_email.py
 
 # Python cache
 *.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
 
 # Logs
 *.log
 
 # IDE
 .vscode/
+.idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Temporary files
+*.tmp
+temp/
