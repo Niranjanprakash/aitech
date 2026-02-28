@@ -1,0 +1,280 @@
+/* ── Splash Screen ── */
+
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    animation: splashFadeIn 0.8s ease forwards;
+}
+
+/* Entry animation */
+@keyframes splashFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Exit animation */
+.splash-screen.splash-exit {
+    animation: splashFadeOut 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes splashFadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    60% {
+        opacity: 0.4;
+        transform: scale(1.04);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.08) translateY(-20px);
+        pointer-events: none;
+    }
+}
+
+/* ── 3D Viewer ── */
+.splash-3d {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.splash-3d spline-viewer {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Hide Spline watermark/logo - multiple methods */
+.splash-3d spline-viewer::part(logo),
+.splash-3d spline-viewer::part(watermark) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+.splash-3d spline-viewer #logo,
+.splash-3d spline-viewer #watermark,
+.splash-3d spline-viewer [class*="logo"],
+.splash-3d spline-viewer [class*="watermark"] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Hide any iframe content */
+.splash-3d iframe {
+    pointer-events: none;
+}
+
+.splash-3d {
+    position: relative;
+}
+
+/* Overlay to hide bottom-right corner where logo appears */
+.splash-3d::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 150px;
+    height: 60px;
+    background: linear-gradient(to top, rgba(10, 8, 30, 0.95) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* ── Dark gradient overlay at bottom for text visibility ── */
+.splash-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+            transparent 30%,
+            rgba(10, 8, 30, 0.55) 65%,
+            rgba(10, 8, 30, 0.85) 100%);
+    pointer-events: none;
+}
+
+/* ── Brand top-left ── */
+.splash-brand {
+    position: absolute;
+    top: 28px;
+    left: 36px;
+    z-index: 10;
+    animation: splashSlideDown 0.8s 0.3s both;
+}
+
+.splash-brand-text {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, #a855f7, #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ── Welcome CTA — bottom-right ── */
+.splash-cta {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    animation: splashSlideUp 0.8s 0.5s both;
+}
+
+.splash-welcome {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.03em;
+    margin: 0;
+    text-align: right;
+    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+    line-height: 1.15;
+}
+
+.splash-tagline {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 12px 0;
+    text-align: right;
+    letter-spacing: 0.02em;
+}
+
+/* ── Launch Button ── */
+.splash-launch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    color: #ffffff;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.5),
+        0 0 0 0 rgba(124, 58, 237, 0);
+    transition: transform 0.25s ease, box-shadow 0.25s ease,
+        background 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.splash-launch-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.splash-launch-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 16px 48px rgba(124, 58, 237, 0.6),
+        0 0 0 4px rgba(124, 58, 237, 0.2);
+}
+
+.splash-launch-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.splash-arrow {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+.splash-launch-btn:hover .splash-arrow {
+    transform: translateX(4px);
+}
+
+/* ── Entrance keyframes ── */
+@keyframes splashSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes splashSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    .splash-cta {
+        right: 15px;
+        bottom: 15px;
+        align-items: flex-end;
+    }
+
+    .splash-welcome {
+        font-size: 1.6rem;
+    }
+
+    .splash-tagline {
+        font-size: 0.85rem;
+    }
+
+    .splash-brand {
+        left: 15px;
+        top: 15px;
+    }
+
+    .splash-brand-text {
+        font-size: 1.2rem;
+    }
+
+    .splash-launch-btn {
+        padding: 12px 24px;
+        font-size: 0.9rem;
+    }
+
+    .splash-3d::after {
+        width: 120px;
+        height: 50px;
+    }
+}

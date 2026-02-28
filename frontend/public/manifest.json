@@ -1,0 +1,9 @@
+{
+  "short_name": "AITechPulze",
+  "name": "AITechPulze - AI, Web and Project Development Services",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#050914",
+  "background_color": "#050914"
+}
