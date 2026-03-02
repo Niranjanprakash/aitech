@@ -140,6 +140,14 @@ function GetQuotePage() {
     setFeedback({ type: "", message: "" });
     setIsSubmitting(true);
 
+    // Wake up backend if sleeping (Free tier)
+    try {
+      await fetch(`${apiBaseUrl}/health`, { method: 'GET' });
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+    } catch (e) {
+      console.log('Waking up backend...');
+    }
+
     const payload = new FormData();
     payload.append("fullName", formData.fullName);
     payload.append("phoneNumber", formData.phoneNumber.trim());
