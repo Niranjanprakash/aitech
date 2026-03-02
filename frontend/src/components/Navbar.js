@@ -28,7 +28,8 @@ function Navbar() {
     <header className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="container nav-inner">
         <NavLink to="/" className="brand" onClick={() => setMenuOpen(false)}>
-          AITechPulze
+          <img src="/favicon.png" alt="AITechPulze" className="brand-logo" />
+          <span>AITechPulze</span>
         </NavLink>
 
         <button

@@ -30,7 +30,14 @@ allowed_origins = [
 ]
 cors_origins = allowed_origins if allowed_origins else "*"
 
-CORS(app, resources={r"/submit-project": {"origins": cors_origins}})
+CORS(app, resources={
+    r"/*": {
+        "origins": cors_origins,
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
 
 
 def _is_valid_phone(value: str) -> bool:

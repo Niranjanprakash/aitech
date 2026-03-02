@@ -201,6 +201,15 @@ ul {
   background-clip: text;
   position: relative;
   transition: var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand-logo {
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
 }
 
 .brand::after {
