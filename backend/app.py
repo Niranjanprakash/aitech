@@ -1,10 +1,12 @@
 import os
 import re
-import smtplib
 import tempfile
 from email.message import EmailMessage
 from pathlib import Path
 from twilio.rest import Client
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
+import base64
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -164,7 +166,7 @@ def _send_whatsapp_notification(
         return False
 
 
-def _build_email_message(
+def _send_email_sendgrid(
     *,
     full_name: str,
     phone_number: str,
@@ -172,47 +174,68 @@ def _build_email_message(
     project_type: str,
     selected_extras: list[str],
     project_description: str,
-    smtp_username: str,
     admin_email: str,
     attachment_path: str | None,
     attachment_name: str | None,
-) -> EmailMessage:
-    message = EmailMessage()
-    message["Subject"] = f"New Project Request | {project_type} | {full_name}"
-    message["From"] = smtp_username
-    message["To"] = admin_email
-    message["Reply-To"] = gmail_id
+) -> bool:
+    """Send email using SendGrid API"""
+    try:
+        sendgrid_api_key = os.getenv("SENDGRID_API_KEY", "").strip()
+        if not sendgrid_api_key:
+            print("ERROR: SENDGRID_API_KEY not configured")
+            return False
 
-    quote = _calculate_quote_estimate(project_type, selected_extras)
+        quote = _calculate_quote_estimate(project_type, selected_extras)
 
-    body = (
-        "New project request received from AITechPulze website.\n\n"
-        f"Full Name: {full_name}\n"
-        f"Phone Number: {phone_number}\n"
-        f"Gmail ID: {gmail_id}\n"
-        f"Project Type: {project_type}\n"
-        f"Key Features: {', '.join(selected_extras) if selected_extras else 'Not specified'}\n\n"
-        "Project Description:\n"
-        f"{project_description}\n\n"
-        "--- QUOTE BREAKDOWN ---\n"
-        f"Base Cost: INR {quote['base']:,}\n"
-        f"Features Cost: INR {quote['extras']:,}\n"
-        f"\nTOTAL AMOUNT: INR {quote['total']:,}\n"
-        "\n(Final quote may vary based on detailed requirements)\n"
-    )
+        body = (
+            "New project request received from AITechPulze website.\n\n"
+            f"Full Name: {full_name}\n"
+            f"Phone Number: {phone_number}\n"
+            f"Gmail ID: {gmail_id}\n"
+            f"Project Type: {project_type}\n"
+            f"Key Features: {', '.join(selected_extras) if selected_extras else 'Not specified'}\n\n"
+            "Project Description:\n"
+            f"{project_description}\n\n"
+            "--- QUOTE BREAKDOWN ---\n"
+            f"Base Cost: INR {quote['base']:,}\n"
+            f"Features Cost: INR {quote['extras']:,}\n"
+            f"\nTOTAL AMOUNT: INR {quote['total']:,}\n"
+            "\n(Final quote may vary based on detailed requirements)\n"
+        )
 
-    message.set_content(body)
+        message = Mail(
+            from_email=admin_email,
+            to_emails=admin_email,
+            subject=f"New Project Request | {project_type} | {full_name}",
+            plain_text_content=body
+        )
+        
+        message.reply_to = gmail_id
 
-    if attachment_path and attachment_name:
-        with open(attachment_path, "rb") as file_handle:
-            message.add_attachment(
-                file_handle.read(),
-                maintype="application",
-                subtype="pdf",
-                filename=attachment_name,
+        if attachment_path and attachment_name:
+            with open(attachment_path, 'rb') as f:
+                data = f.read()
+                encoded = base64.b64encode(data).decode()
+            
+            attached_file = Attachment(
+                FileContent(encoded),
+                FileName(attachment_name),
+                FileType('application/pdf'),
+                Disposition('attachment')
             )
+            message.attachment = attached_file
 
-    return message
+        sg = SendGridAPIClient(sendgrid_api_key)
+        response = sg.send(message)
+        
+        print(f"✅ Email sent via SendGrid! Status: {response.status_code}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ SendGrid Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 @app.get("/health")
@@ -281,45 +304,42 @@ def submit_project() -> tuple:
                 uploaded_pdf.save(temp_file.name)
                 temp_file_path = temp_file.name
 
-        smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-        smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        smtp_username = os.getenv("SMTP_USERNAME", "").strip()
-        smtp_password = os.getenv("SMTP_PASSWORD", "").strip()
         admin_email = os.getenv("ADMIN_EMAIL", "").strip()
 
-        if not smtp_username or not smtp_password or not admin_email:
+        if not admin_email:
             return (
                 jsonify(
                     {
                         "success": False,
-                        "message": "SMTP configuration error. Please contact administrator.",
+                        "message": "Email configuration error. Please contact administrator.",
                     }
                 ),
                 500,
             )
 
-        message = _build_email_message(
+        # Send email via SendGrid
+        email_sent = _send_email_sendgrid(
             full_name=full_name,
             phone_number=phone_number,
             gmail_id=gmail_id,
             project_type=project_type,
             selected_extras=selected_extras,
             project_description=project_description,
-            smtp_username=smtp_username,
             admin_email=admin_email,
             attachment_path=temp_file_path,
             attachment_name=attachment_name,
         )
-
-        use_tls = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
-
-        with smtplib.SMTP(host=smtp_host, port=smtp_port, timeout=10) as smtp_server:
-            smtp_server.ehlo()
-            if use_tls:
-                smtp_server.starttls()
-                smtp_server.ehlo()
-            smtp_server.login(smtp_username, smtp_password)
-            smtp_server.send_message(message)
+        
+        if not email_sent:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "message": "Unable to send email. Please try again later.",
+                    }
+                ),
+                500,
+            )
 
         # Send WhatsApp notification (non-blocking, optional)
         try:
@@ -346,28 +366,6 @@ def submit_project() -> tuple:
                 }
             ),
             200,
-        )
-    except smtplib.SMTPAuthenticationError as e:
-        print(f"SMTP Auth Error: {e}")
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "message": "Email service authentication failed. Please try again later.",
-                }
-            ),
-            500,
-        )
-    except smtplib.SMTPException as e:
-        print(f"SMTP Error: {e}")
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "message": "Unable to send email right now. Please try again later.",
-                }
-            ),
-            500,
         )
     except Exception as error:
         import traceback
